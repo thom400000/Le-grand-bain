@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Le Grand Bain</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #020817; color: #fff; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+    #app { min-height: 100vh; }
+
+    .glass { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07); }
+    .glass-blue { background: rgba(14,165,233,0.07); border: 1px solid rgba(14,165,233,0.2); }
+    .wave-bg { background: radial-gradient(ellipse 90% 50% at 50% -5%, rgba(14,165,233,0.16) 0%, transparent 70%); }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 0 18px; }
+
+    .card-hover { cursor: pointer; transition: transform .25s ease, background .2s; }
+    .card-hover:hover { transform: translateY(-3px); }
+
+    .btn-primary {
+      display: block; width: 100%;
+      background: linear-gradient(135deg, #0EA5E9, #0284C7);
+      color: #fff; border: none; border-radius: 14px;
+      padding: 15px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: opacity .2s; text-align: center;
+    }
+    .btn-primary:hover { opacity: .88; }
+
+    .btn-ghost {
+      background: transparent; border: none; cursor: pointer;
+      font-family: inherit; color: #64748B; font-size: 13px;
+    }
+
+    .nav-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #020817; border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 8px 16px 12px; z-index: 100;
+    }
+    .nav-bar-inner { max-width: 520px; margin: 0 auto; display: flex; gap: 6px; }
+    .nav-btn {
+      flex: 1; border: none; cursor: pointer; border-radius: 12px;
+      padding: 7px 4px; background: transparent; color: #64748B;
+      font-family: inherit; transition: background .2s, color .2s;
+    }
+    .nav-btn.active { background: rgba(14,165,233,0.15); color: #38BDF8; }
+    .nav-btn .icon { font-size: 18px; }
+    .nav-btn .label { font-size: 10px; margin-top: 2px; }
+
+    .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
+    .score-pill {
+      border: 1.5px solid rgba(255,255,255,0.1); border-radius: 10px;
+      background: transparent; cursor: pointer; padding: 10px 4px;
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      color: #64748B;
+      transition: border-color .15s, background .15s, transform .15s, color .15s;
+    }
+    .score-pill:hover { border-color: #0EA5E9; transform: scale(1.08); }
+    .score-pill.selected { background: #0EA5E9; border-color: #0EA5E9; color: #fff; }
+
+    .progress-track { height: 5px; background: #0f172a; border-radius: 5px; overflow: hidden; }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0EA5E9, #06B6D4);
+      border-radius: 5px;
+      transition: width 1.2s cubic-bezier(.22,1,.36,1);
+    }
+
+    .audio-upload-zone {
+      border: 2px dashed rgba(14,165,233,0.3);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: rgba(14,165,233,0.04);
+    }
+    .audio-upload-zone:hover { border-color: rgba(14,165,233,0.6); background: rgba(14,165,233,0.08); }
+    .audio-upload-zone input[type=file] { display: none; }
+    audio { width: 100%; border-radius: 12px; outline: none; margin-top: 12px; }
+    audio::-webkit-media-controls-panel { background: #0f172a; }
+
+    .script-prose { font-size: 14px; line-height: 1.85; color: #CBD5E1; white-space: pre-line; }
+
+    .accordion-body { overflow: hidden; transition: max-height .35s ease; max-height: 0; }
+    .accordion-body.open { max-height: 9999px; }
+    .accordion-arrow { transition: transform .2s; display: inline-block; }
+    .accordion-arrow.open { transform: rotate(90deg); }
+
+    .tag { font-size: 11px; padding: 2px 10px; border-radius: 20px; display: inline-block; }
+    .tag-anxieux  { background: rgba(244,63,94,0.1);  color: #fda4af; border: 1px solid rgba(244,63,94,0.2); }
+    .tag-rouille  { background: rgba(20,184,166,0.1); color: #5eead4; border: 1px solid rgba(20,184,166,0.2); }
+    .tag-non      { background: rgba(245,158,11,0.1); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+
+    .fade-in { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) both; }
+    .fade-in.d1 { animation-delay: .1s; }
+    .fade-in.d2 { animation-delay: .2s; }
+    @keyframes fadeUp { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform: none; } }
+
+    .pop { animation: pop .35s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes pop { from { transform:scale(.8); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+    textarea {
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 12px; color: #fff; width: 100%;
+      resize: none; font-family: inherit; font-size: 14px; outline: none; line-height: 1.6;
+    }
+    textarea:focus { border-color: #0EA5E9; }
+    textarea::placeholder { color: #475569; }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.25); border-radius: 2px; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .seance-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 12px; border-radius: 12px; border: none;
+      background: transparent; cursor: pointer; text-align: left; width: 100%;
+      transition: background .2s;
+    }
+    .seance-row:hover { background: rgba(255,255,255,0.04); }
+
+    .chart-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .chart-fill {
+      width: 100%; border-radius: 3px 3px 0 0;
+      background: #0f172a; transition: height .8s ease, background .3s;
+    }
+    .chart-fill.done { background: #0EA5E9; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const BLOCK_META = {
+      instruction: { icon:'📋', label:'Instructions', cls:'block-instruction' },
+      voix:        { icon:'🎙', label:'Audio', cls:'block-voix' },
+      respiration: { icon:'💨', label:'Respiration', cls:'block-respiration' },
+      exercice:    { icon:'💧', label:'Exercice', cls:'block-exercice' },
+      pause:       { icon:'⏸', label:'Pause', cls:'block-pause' },
+      scan:        { icon:'🧘', label:'Scan corporel', cls:'block-scan' },
+      fin:         { icon:'✅', label:'Check-in', cls:'block-fin' },
+    };
+
+    const SCRIPTS = {
+      "s1-1": { titre:"Prise de contact — S1·1", duree:"8 min", lines:[
+        {t:"instruction", x:"À lire au bord du bassin, avant d'entrer dans l'eau."},
+        {t:"voix", x:"Tu es là. C'est déjà une victoire."},
+        {t:"voix", x:"Avant d'entrer dans l'eau, regarde-la. Observe-la. Elle est calme. Elle t'attend."},
+        {t:"respiration", x:"Inspire par le nez — 1, 2, 3. Expire par la bouche — 1, 2, 3, 4, 5. Encore une fois. Inspire — 1, 2, 3. Expire — 1, 2, 3, 4, 5."},
+        {t:"pause", x:"Entre dans l'eau doucement. Prends ton temps."},
+        {t:"voix", x:"Tu es dans l'eau. Sens la température. Sens la résistance légère autour de tes chevilles. Tu n'as rien à prouver aujourd'hui. Juste marcher."},
+        {t:"voix", x:"Commence à marcher lentement. Un pas, puis l'autre. Sens tes pieds toucher le fond. Le fond est là. Il est solide."},
+        {t:"respiration", x:"Continue à respirer. Inspire — 1, 2, 3. Expire — 1, 2, 3, 4, 5. À chaque expiration, laisse tes épaules descendre un peu plus."},
+        {t:"pause", x:"Après 5 minutes de marche — arrête-toi."},
+        {t:"voix", x:"Reste immobile dans l'eau. Sens comment l'eau te soutient légèrement. Elle pousse contre toi doucement. Tu n'as rien à faire pour rester debout."},
+        {t:"fin", x:"Note ton score de confiance de 1 à 10. Et un mot pour décrire ce que tu as ressenti."},
+      ]},
+      "s1-2": { titre:"Jeu avec l'eau — S1·2", duree:"6 min", lines:[
+        {t:"instruction", x:"À lire au bord. Aujourd'hui : jeu, pas performance."},
+        {t:"voix", x:"Aujourd'hui on joue. Pas de performance. Pas d'objectif technique. On apprivoise."},
+        {t:"voix", x:"Entre dans l'eau. Petit bain. Tu as pied partout."},
+        {t:"exercice", x:"Commence par éclabousser tes bras. Fort. Encore. Fais du bruit si tu veux — c'est permis."},
+        {t:"pause", x:"30 secondes d'éclaboussures libres."},
+        {t:"voix", x:"Maintenant mouille ton visage. Juste les joues d'abord. Puis le front. Doucement — à ton rythme. Tu contrôles."},
+        {t:"exercice", x:"Mets tes lèvres dans l'eau. Souffle. Des bulles. Recommence 5 fois. Ce n'est pas nager — c'est juste jouer."},
+        {t:"respiration", x:"Après chaque soufflage, redresse-toi. Inspire à fond. Expire lentement. Tu es en sécurité."},
+        {t:"voix", x:"Tu viens de faire quelque chose que beaucoup d'adultes n'osent pas. C'est ça le travail d'aujourd'hui."},
+        {t:"fin", x:"Ton score a-t-il changé par rapport à la séance 1 ? Qu'est-ce qui t'a aidé ?"},
+      ]},
+      "s1-3": { titre:"Flottaison assistée — S1·3", duree:"10 min", lines:[
+        {t:"instruction", x:"Tu vas avoir besoin du bord de la piscine pour cette séance."},
+        {t:"voix", x:"La flottaison, c'est la clé de tout. Pas les bras, pas les jambes — la capacité à laisser l'eau te porter."},
+        {t:"voix", x:"Entre dans l'eau. Tiens le bord ou l'échelle. Petit bain uniquement."},
+        {t:"exercice", x:"Allonge-toi sur le dos en tenant le bord. Tête en arrière. Oreilles dans l'eau. Yeux vers le plafond."},
+        {t:"respiration", x:"Respire lentement. Ventre qui monte à l'inspire, qui descend à l'expire. C'est le ventre qui flotte, pas les épaules."},
+        {t:"scan", x:"Scan corporel — lentement : relâche tes pieds. Tes mollets. Tes cuisses. Tes fessiers. Ton ventre. Tes épaules. Tes mâchoires."},
+        {t:"voix", x:"L'eau te porte. Elle a toujours fait ça. Tu n'as pas besoin de te battre contre elle. Laisse-la travailler."},
+        {t:"exercice", x:"Trois tentatives de 10 secondes. Entre chaque, reprends le bord, respire, relâche les épaules."},
+        {t:"voix", x:"Si tu coules légèrement — c'est normal. Reprends appui, respire, recommence. Le corps apprend à chaque tentative."},
+        {t:"fin", x:"Combien de secondes as-tu flotté sans tension ? Écris le nombre. Objectif semaine prochaine : doubler ce chiffre."},
+      ]},
+      "s2-1": { titre:"Expiration subaquatique — S2·1", duree:"8 min", lines:[
+        {t:"instruction", x:"Cette séance travaille uniquement la respiration. Petit bain recommandé."},
+        {t:"voix", x:"La plupart des gens ont peur de mettre la tête dans l'eau parce qu'ils ne savent pas gérer leur souffle. On règle ça aujourd'hui."},
+        {t:"exercice", x:"Série 1 : Baisse le nez jusqu'à l'eau. Souffle par le nez — des bulles. 10 fois. Juste le nez."},
+        {t:"respiration", x:"Rythme : inspir hors de l'eau — 1, 2, 3. Expir dans l'eau — 1, 2, 3, 4, 5. L'expiration est toujours plus longue."},
+        {t:"exercice", x:"Série 2 : Bouche dans l'eau. Souffle par la bouche — grosses bulles. 10 fois."},
+        {t:"pause", x:"Pause de 30 secondes. Respire normalement."},
+        {t:"exercice", x:"Série 3 : Tête entière dans l'eau. Expire par le nez et la bouche en même temps. 10 fois."},
+        {t:"voix", x:"Tu viens de mettre la tête sous l'eau 30 fois. Ton cerveau vient d'enregistrer que c'est safe. C'est comme ça que ça marche — par répétition, pas par volonté."},
+        {t:"fin", x:"As-tu ressenti de l'anxiété en immergeant le visage ? Note l'intensité sur 10. Compare avec la semaine dernière."},
+      ]},
+      "s2-2": { titre:"Apnée statique au bord — S2·2", duree:"7 min", lines:[
+        {t:"instruction", x:"Tu vas rester immobile sous l'eau. Tiens le bord — tu contrôles."},
+        {t:"voix", x:"L'apnée n'est pas une compétition. C'est un dialogue avec ton corps. On commence doucement."},
+        {t:"respiration", x:"Avant chaque apnée : 3 respirations profondes. Inspir lent — 1, 2, 3, 4. Expir lent — 1, 2, 3, 4, 5, 6."},
+        {t:"exercice", x:"Apnées 1 et 2 : Immerse le visage. Compte jusqu'à 5. Remonte. 3 respirations de récupération."},
+        {t:"exercice", x:"Apnée 3 : Essaie 8 secondes. Si inconfortable à 5 — remonte sans culpabilité."},
+        {t:"voix", x:"Le besoin de respirer que tu ressens vient du CO2 qui monte — pas du manque d'oxygène. Ton corps a des réserves."},
+        {t:"exercice", x:"Apnées 4 et 5 : Objectif 10 secondes. Entre chaque, récupère complètement."},
+        {t:"fin", x:"Temps maximum atteint aujourd'hui ? Note le chiffre — on le retrouvera en semaine 6."},
+      ]},
+      "s2-3": { titre:"Cycle complet en déplacement — S2·3", duree:"9 min", lines:[
+        {t:"instruction", x:"On intègre la respiration dans le déplacement. 10 mètres max."},
+        {t:"voix", x:"Jusqu'ici tu travaillais immobile. Aujourd'hui on combine mouvement et respiration. C'est là que tout s'assemble."},
+        {t:"exercice", x:"Crawl simplifié : 3 coups de bras — puis tu tournes la tête sur le côté pour respirer. Pas lever la tête — tourner. La différence est tout."},
+        {t:"respiration", x:"Rythme : bras droit, bras gauche, bras droit — tourne à droite — inspire — tête dans l'eau — expire en nageant."},
+        {t:"pause", x:"Après chaque passage : 30 secondes de pause. Respire. Évalue ton état."},
+        {t:"voix", x:"Si la panique monte — arrête-toi. Tiens le bord. Respire. Ce n'est pas un échec, c'est une information."},
+        {t:"exercice", x:"3 passages de 10 mètres. Rien de plus. Qualité du souffle > distance."},
+        {t:"fin", x:"Combien de cycles respiratoires as-tu réussi sans inconfort sur 10 mètres ?"},
+      ]},
+      "s3-1": { titre:"Franchir la ligne — S3·1", duree:"8 min", lines:[
+        {t:"instruction", x:"Tu vas approcher puis traverser la ligne de profondeur."},
+        {t:"voix", x:"Il y a une ligne dans chaque piscine. Avant : petit bain. Après : grand bain. Cette ligne, on va la traverser ensemble aujourd'hui."},
+        {t:"respiration", x:"Stop. Respire. 3 respirations profondes. Regarde la ligne. Elle ne te fait rien. C'est juste du carrelage peint."},
+        {t:"exercice", x:"Passage 1 : Traverse la ligne en tenant le couloir. Avance de 2 mètres dans le grand bain. Stop. Tu flottes. Reviens."},
+        {t:"voix", x:"Ce que tu viens de faire — la plupart des nageurs anxieux ne l'ont pas fait depuis des années. Acte simple. Victoire réelle."},
+        {t:"exercice", x:"Passage 2 : Arrête-toi 15 secondes dans le grand bain. Respire. L'eau est la même de chaque côté de la ligne."},
+        {t:"exercice", x:"Passage 3 : Sans tenir le bord. Nage jusqu'à 3 mètres dans le grand bain. Flottaison 10 sec. Reviens."},
+        {t:"voix", x:"La profondeur ne change pas ta flottabilité. La peur vient des yeux — pas de la physique."},
+        {t:"fin", x:"As-tu franchi la ligne ? Combien de fois ? Qu'est-ce qui t'a aidé à continuer ?"},
+      ]},
+      "s3-2": { titre:"Flottaison en eau profonde — S3·2", duree:"10 min", lines:[
+        {t:"instruction", x:"Tu vas lâcher le bord en eau profonde. Reviens au bord quand tu veux."},
+        {t:"voix", x:"Aujourd'hui on lâche. Le bord, l'appui, la sécurité visible. On fait confiance à l'eau."},
+        {t:"respiration", x:"3 respirations profondes. Sens tes mains sur le bord. Tu es stable. Tu es en sécurité. Tu contrôles."},
+        {t:"exercice", x:"Flottaison 1 : Lâche le bord. Écarte les bras et les jambes en étoile. Tête en arrière. 10 secondes."},
+        {t:"voix", x:"Si tu coules légèrement — reprends le bord, respire, recommence. Il n'y a pas d'échec ici."},
+        {t:"scan", x:"Scan pendant que tu flottes : mâchoires relâchées ? Épaules basses ? Mains ouvertes ? Orteils détendus ?"},
+        {t:"exercice", x:"Flottaison 2 : 15 secondes. Pense à relâcher les hanches — elles doivent monter, pas descendre."},
+        {t:"exercice", x:"Flottaison 3 : Essaie 20 secondes. Laisse l'eau décider. Elle te porte — tu n'as rien à faire."},
+        {t:"fin", x:"Score de confiance avant la séance vs après. Quelle est la différence ?"},
+      ]},
+      "s3-3": { titre:"Nage en eau profonde — S3·3", duree:"8 min", lines:[
+        {t:"instruction", x:"Première nage continue en grand bain. 25 mètres. Une longueur."},
+        {t:"voix", x:"Tu as traversé la ligne. Tu as flotté sans appui. Maintenant on nage. Juste 25 mètres."},
+        {t:"respiration", x:"Avant de partir : 3 respirations. Regarde l'autre bout. Il est là. Il t'attend."},
+        {t:"exercice", x:"Longueur 1 : Nage à ton rythme. Crawl, brasse, ou les deux. L'objectif : arriver sans toucher le bord en milieu de parcours."},
+        {t:"voix", x:"Si la panique monte à mi-chemin : lève la tête. Regarde l'autre bout. Il est plus proche qu'il n'y paraît. Continue."},
+        {t:"voix", x:"La panique dans l'eau vient presque toujours de la respiration qui s'emballe. Ralentis. Expire long. Ça régule tout."},
+        {t:"pause", x:"Arrivé de l'autre côté : 45 secondes de récupération. Respire normalement."},
+        {t:"exercice", x:"Longueur 2 : Retour. Sans toucher le bord en milieu. Tu l'as déjà fait — tu sais que tu peux."},
+        {t:"fin", x:"As-tu ressenti l'envie de t'arrêter ? À quel moment ? Qu'est-ce qui t'a aidé à continuer ?"},
+      ]},
+      "s4-1": { titre:"Nage continue 200m — S4·1", duree:"12 min", lines:[
+        {t:"instruction", x:"200 mètres. Tu ne penses pas à 200m — tu penses à la prochaine respiration."},
+        {t:"voix", x:"200 mètres. 8 longueurs. Mais tu ne vas pas penser à 200 mètres — tu vas penser à la prochaine respiration. C'est tout."},
+        {t:"respiration", x:"Respiration de départ : inspire profond — expire lentement. Encore. Le rythme que tu établis maintenant, tu le gardes pendant toute la nage."},
+        {t:"exercice", x:"Commence. Rythme lent et régulier. La technique est secondaire. Ce qui compte : ne pas s'arrêter."},
+        {t:"voix", x:"À mi-parcours — 100 mètres : tu vas avoir envie de t'arrêter. C'est normal. C'est le mur. Note cette sensation sans y répondre. Continue."},
+        {t:"voix", x:"Mindfulness aquatique : sens l'eau sur ta peau. Tes bras qui tirent. Tes jambes qui battent. Ton souffle qui sort. Tu es ici. Tu nages."},
+        {t:"voix", x:"Si tu dois t'arrêter — 4 x 50m avec 20 secondes de repos. C'est autant de valeur."},
+        {t:"voix", x:"Dernière longueur : ralentis encore. Savoure. Ce n'est pas une arrivée — c'est une nouvelle ligne de départ."},
+        {t:"fin", x:"As-tu terminé les 200m ? Quelle était ta principale difficulté — physique ou mentale ?"},
+      ]},
+      "s4-2": { titre:"Jeu de profondeur — S4·2", duree:"9 min", lines:[
+        {t:"instruction", x:"Prends un objet qui coule — pièce, lunettes. Tu vas plonger le chercher."},
+        {t:"voix", x:"Pas d'obligation de réussir. Juste d'essayer."},
+        {t:"respiration", x:"Avant chaque tentative : 3 respirations lentes. Inspire — 1, 2, 3, 4. Expire — 1, 2, 3, 4, 5, 6."},
+        {t:"exercice", x:"Tentative 1 : Lâche l'objet. Regarde-le descendre. Plonge. Va aussi loin que tu peux confortablement. Remonte."},
+        {t:"voix", x:"Ce que tu viens de faire — tu as décidé d'aller vers le fond. Pas le fond qui t'a attiré — toi qui y es allé. C'est un renversement complet."},
+        {t:"exercice", x:"Tentatives 2 à 5 : Idem. Note comment chaque tentative est différente de la précédente."},
+        {t:"voix", x:"Entre chaque tentative : refais surface. Respire normalement. Pas de précipitation."},
+        {t:"fin", x:"Combien de tentatives réussies ? Qu'est-ce qui a changé entre la première et la dernière ?"},
+      ]},
+      "s4-3": { titre:"Nage en open space — S4·3", duree:"10 min", lines:[
+        {t:"instruction", x:"Tu vas nager sans suivre de couloir. Tu décides où tu vas."},
+        {t:"voix", x:"Les couloirs te donnent une direction forcée. Aujourd'hui on enlève les rails. Tu décides où tu vas."},
+        {t:"exercice", x:"Exercice 1 : Nage en diagonale d'un coin à l'autre du grand bain. 3 fois. Regarde devant — pas en bas."},
+        {t:"voix", x:"Regarde devant, pas en bas. Le fond n'est pas ton ennemi mais il ne t'est d'aucune utilité non plus."},
+        {t:"exercice", x:"Exercice 2 : Nage en cercle autour du centre du bassin. Tu n'es pas perdu — tu explores."},
+        {t:"exercice", x:"Exercice 3 : Arrête-toi au milieu du grand bain. Flotte 15 secondes. Aucun bord à portée. C'est ça l'aisance aquatique."},
+        {t:"voix", x:"Comment tu te sens là, maintenant, dans l'eau ? Compare avec la semaine 1. Ce sont deux nageurs différents."},
+        {t:"fin", x:"Écris 3 mots qui décrivent comment tu te sens dans l'eau aujourd'hui."},
+      ]},
+      "s5-1": { titre:"Chute simulée — S5·1", duree:"8 min", lines:[
+        {t:"instruction", x:"Tu vas entrer dans l'eau sans t'accrocher — comme une chute involontaire."},
+        {t:"voix", x:"La vraie aisance aquatique c'est être capable de gérer l'imprévu. Tomber dans l'eau. Perdre pied. Aujourd'hui on prépare ça."},
+        {t:"respiration", x:"Avant chaque entrée : inspire, bloque légèrement au moment de l'entrée, expire dès que tu es dans l'eau."},
+        {t:"exercice", x:"Entrée 1 : Glisse dans l'eau depuis le bord assis. Lâche. Retrouve ta surface. Oriente-toi. Nage 10m vers le bord."},
+        {t:"voix", x:"Post-chute : respire, oriente-toi, nage vers le bord. Dans cet ordre. Toujours."},
+        {t:"exercice", x:"Entrées 2, 3, 4 : Idem. Ce réflexe s'installe maintenant, pas dans l'urgence."},
+        {t:"exercice", x:"Entrée 5 : Essaie debout, pieds en avant. Ressors seul du grand bain sans aide."},
+        {t:"voix", x:"Tu viens de simuler 5 chutes et tu t'en es sorti 5 fois. Ton cerveau vient d'enregistrer ça comme une compétence."},
+        {t:"fin", x:"As-tu eu une montée de stress ? À quel moment exactement ?"},
+      ]},
+      "s5-2": { titre:"Nage en aveugle partiel — S5·2", duree:"7 min", lines:[
+        {t:"instruction", x:"Laisse tes lunettes au bord. Tu vas nager sans elles."},
+        {t:"voix", x:"En mer, en lac, dans une piscine trouble — tu n'auras pas toujours une vision parfaite."},
+        {t:"exercice", x:"Passage 1 : 25 mètres sans lunettes, yeux ouverts. Vision floue — c'est normal. Sens la résistance de l'eau sur tes mains."},
+        {t:"voix", x:"Proprioception : la capacité à sentir son corps sans le voir. Tu l'as. Elle s'est juste endormie."},
+        {t:"exercice", x:"Passage 2 : 25 mètres, yeux mi-fermés. Concentre-toi sur les sensations : pression de l'eau, allongement du corps."},
+        {t:"voix", x:"Tu n'as pas besoin de voir le fond pour nager. Ton corps a des capteurs — laisse-les travailler."},
+        {t:"exercice", x:"Passage 3 si prêt : 25 mètres yeux fermés, une main tendue devant. Sens quand tu approches du bord."},
+        {t:"fin", x:"Quelle est la principale sensation nouvelle aujourd'hui ?"},
+      ]},
+      "s5-3": { titre:"Consolidation autonome — S5·3", duree:"Pas d'audio", lines:[
+        {t:"instruction", x:"Pas d'audio pour cette séance. C'est volontaire — test d'autonomie complète."},
+        {t:"voix", x:"Tu as travaillé 5 semaines avec un guide. Aujourd'hui tu y vas seul. C'est le test de ce que tu as intégré."},
+        {t:"exercice", x:"Exercice 1 : Flottaison étoile en eau profonde — 20 secondes. Sans compte, sans guidage."},
+        {t:"exercice", x:"Exercice 2 : 2 x 50 mètres continus. Rythme choisi par toi. Respiration gérée par toi."},
+        {t:"exercice", x:"Exercice 3 : 1 plongeon récupération d'objet. Juste toi et l'eau."},
+        {t:"voix", x:"Si tu bloques sur un exercice — c'est une information, pas un échec. Note ce qui coince."},
+        {t:"voix", x:"La semaine prochaine c'est la dernière. Elle est faite pour que tu découvres ce que tu es devenu depuis la séance 1."},
+        {t:"fin", x:"Note globale de confiance (1-10). Tu es où par rapport à ton objectif de départ ?"},
+      ]},
+      "s6-1": { titre:"Séance libre guidée — S6·1", duree:"2 min", lines:[
+        {t:"instruction", x:"Lis ça. Puis va dans l'eau faire ce que tu veux."},
+        {t:"voix", x:"Six semaines. Tu es arrivé à la dernière semaine."},
+        {t:"voix", x:"Aujourd'hui il n'y a pas d'exercice imposé. Tu choisis. Tu décides ce que tu veux travailler, explorer, ou célébrer dans l'eau."},
+        {t:"voix", x:"C'est ça, la liberté aquatique. Pas une technique. Pas un score. Un choix."},
+        {t:"voix", x:"Va dans l'eau. Fais ce qui te fait plaisir. Ce que tu aurais été incapable de faire il y a 6 semaines."},
+        {t:"pause", x:"30 minutes. Pas de consigne. Juste toi et l'eau."},
+        {t:"fin", x:"Qu'est-ce que tu as choisi de faire, et pourquoi ?"},
+      ]},
+      "s6-2": { titre:"Test 400 mètres — S6·2", duree:"5 min", lines:[
+        {t:"instruction", x:"Dernier vrai test. 400 mètres. Pas une compétition — une démonstration à toi-même."},
+        {t:"voix", x:"400 mètres. 16 longueurs. Pas une compétition. Une démonstration — à toi-même."},
+        {t:"respiration", x:"Respiration de départ : inspire — 1, 2, 3, 4. Expire — 1, 2, 3, 4, 5, 6. Tu es prêt."},
+        {t:"voix", x:"Pars. Rythme que tu peux tenir 16 longueurs. Pas ton max — ton rythme durable."},
+        {t:"voix", x:"Si la fatigue arrive — ralentis. Si la panique monte — rappelle-toi la séance 1. Maintenant tu nages 400m. C'est réel."},
+        {t:"voix", x:"Quand tu touches le bord final : reste dans l'eau 30 secondes. Ressens ça. Mémorise cette sensation."},
+        {t:"fin", x:"Compare ton score de confiance semaine 1 vs maintenant. Qu'est-ce qui a changé — dans l'eau, et en dehors ?"},
+      ]},
+      "s6-3": { titre:"Séance d'ouverture — S6·3", duree:"6 min", lines:[
+        {t:"instruction", x:"À lire avant d'aller dans un nouvel environnement : lac, mer, ou piscine inconnue."},
+        {t:"voix", x:"Ton programme s'est passé dans un endroit connu. Aujourd'hui tu transfères ce que tu as appris ailleurs. C'est là que ça devient réel."},
+        {t:"voix", x:"Avant d'entrer — arrête-toi. Regarde l'eau. L'eau d'un lac, d'une mer, d'une piscine inconnue — c'est la même eau."},
+        {t:"respiration", x:"3 respirations. Tu as les outils. Ils ne restent pas à la piscine. Ils sont en toi."},
+        {t:"voix", x:"Ce lieu est nouveau. Tes sensations ne le sont plus."},
+        {t:"voix", x:"Entre dans l'eau comme tu l'as appris. Apprivoise d'abord — marche, sens, respire. Puis nage quand tu es prêt."},
+        {t:"voix", x:"Si l'anxiété monte : reviens à la respiration. C'est ton ancre. Elle fonctionne partout."},
+        {t:"voix", x:"Bienvenue dans l'eau. Pour de bon. Cette fois, tu y restes."},
+        {t:"fin", x:"Bilan final : 3 victoires du programme. Ce que tu veux continuer à travailler."},
+      ]},
+    };
+
+    const WEEKS = [
+      { num:1, title:"Retrouver la sensation", color:"#0EA5E9", icon:"🌊",
+        objectif:"Se sentir à l'aise en eau peu profonde sans panique",
+        seances:[
+          {id:"s1-1",titre:"Prise de contact",duree:"20 min",profil:["Anxieux","Non-nageur","Rouillé"],desc:"Marche lente dans l'eau, arrêts conscients, respirations profondes. Petit bain uniquement."},
+          {id:"s1-2",titre:"Jeu avec l'eau",duree:"20 min",profil:["Anxieux","Rouillé"],desc:"Éclaboussures volontaires, visage mouillé progressivement. On apprivoise — pas de performance."},
+          {id:"s1-3",titre:"Flottaison assistée",duree:"25 min",profil:["Anxieux","Non-nageur","Rouillé"],desc:"Position dorsale avec appui du bord. Relâchement progressif. Focus respiration abdominale."},
+        ]},
+      { num:2, title:"Maîtriser sa respiration", color:"#06B6D4", icon:"💨",
+        objectif:"Contrôler l'apnée courte et l'expiration dans l'eau",
+        seances:[
+          {id:"s2-1",titre:"Expiration subaquatique",duree:"20 min",profil:["Anxieux","Non-nageur","Rouillé"],desc:"Souffler sous l'eau, bulles par le nez et la bouche. 3 séries de 10 expirations."},
+          {id:"s2-2",titre:"Apnée statique au bord",duree:"20 min",profil:["Anxieux","Rouillé"],desc:"Tenu du bord, immersion du visage, apnée 5 secondes. Progresser vers 10 sec."},
+          {id:"s2-3",titre:"Cycle complet en déplacement",duree:"25 min",profil:["Anxieux","Rouillé","Non-nageur"],desc:"Crawl simplifié : 3 bras, 1 respiration. Distance : 10m max."},
+        ]},
+      { num:3, title:"Conquérir la profondeur", color:"#0284C7", icon:"⬇️",
+        objectif:"Se sentir en sécurité en eau profonde sans appui",
+        seances:[
+          {id:"s3-1",titre:"Franchir la ligne",duree:"25 min",profil:["Anxieux","Rouillé"],desc:"Traverser la ligne de profondeur en tenant le couloir. S'arrêter, observer, repartir."},
+          {id:"s3-2",titre:"Flottaison en eau profonde",duree:"25 min",profil:["Anxieux","Rouillé"],desc:"Lâcher le bord, flotter 15 secondes en étoile. Seul, sans appui."},
+          {id:"s3-3",titre:"Nage en eau profonde",duree:"30 min",profil:["Anxieux","Rouillé","Non-nageur"],desc:"2 x 25m en crawl ou brasse, sans s'arrêter, sans toucher le bord entre les deux."},
+        ]},
+      { num:4, title:"Construire l'endurance", color:"#0369A1", icon:"💪",
+        objectif:"Maintenir la sérénité sur des efforts plus longs",
+        seances:[
+          {id:"s4-1",titre:"Nage continue 200m",duree:"30 min",profil:["Anxieux","Rouillé"],desc:"Nager 200m sans s'arrêter, rythme lent. Seule la continuité compte."},
+          {id:"s4-2",titre:"Jeu de profondeur",duree:"25 min",profil:["Anxieux","Rouillé","Non-nageur"],desc:"Plonger pour récupérer un objet au fond (1,5m). 5 tentatives."},
+          {id:"s4-3",titre:"Nage en open space",duree:"30 min",profil:["Anxieux","Rouillé"],desc:"Nager dans le grand bain sans suivre le couloir. Trajectoire libre."},
+        ]},
+      { num:5, title:"Situations inattendues", color:"#1D4ED8", icon:"⚡",
+        objectif:"Garder le calme face à l'inattendu dans l'eau",
+        seances:[
+          {id:"s5-1",titre:"Chute simulée",duree:"25 min",profil:["Anxieux","Rouillé"],desc:"Entrer dans l'eau sans s'accrocher, comme une chute. Retrouver l'équilibre seul. 5 fois."},
+          {id:"s5-2",titre:"Nage en aveugle partiel",duree:"25 min",profil:["Rouillé","Anxieux"],desc:"Nager 25m sans lunettes. S'adapter à la désorientation visuelle."},
+          {id:"s5-3",titre:"Consolidation autonome",duree:"30 min",profil:["Anxieux","Rouillé","Non-nageur"],desc:"Reproduire les exercices clés des semaines 3 et 4 de mémoire, sans consigne audio."},
+        ]},
+      { num:6, title:"Autonomie totale", color:"#4F46E5", icon:"🏆",
+        objectif:"Nager seul, en confiance, dans n'importe quelle situation",
+        seances:[
+          {id:"s6-1",titre:"Séance libre guidée",duree:"30 min",profil:["Anxieux","Rouillé","Non-nageur"],desc:"Tu choisis tes exercices. 30 min. Aucune contrainte imposée."},
+          {id:"s6-2",titre:"Test 400 mètres",duree:"35 min",profil:["Anxieux","Rouillé"],desc:"400m nage continue. L'objectif : terminer sereinement."},
+          {id:"s6-3",titre:"Séance d'ouverture",duree:"Variable",profil:["Anxieux","Rouillé","Non-nageur"],desc:"Essayer un nouvel environnement : lac, mer, piscine inconnue."},
+        ]},
+    ];
+
+    const state = {
+      view: 'home',
+      completed: {},
+      scores: {},
+      notes: {},
+      curWeek: null,
+      curSeance: null,
+      scriptOpen: false,
+      tempScore: 5,
+      tempNote: '',
+      checkinDone: false,
+    };
+
+    function saveState() {
+      try {
+        localStorage.setItem('lgb_completed', JSON.stringify(state.completed));
+        localStorage.setItem('lgb_scores', JSON.stringify(state.scores));
+        localStorage.setItem('lgb_notes', JSON.stringify(state.notes));
+      } catch(e) {}
+    }
+
+    function loadState() {
+      try {
+        const c = localStorage.getItem('lgb_completed');
+        const s = localStorage.getItem('lgb_scores');
+        const n = localStorage.getItem('lgb_notes');
+        if (c) state.completed = JSON.parse(c);
+        if (s) state.scores = JSON.parse(s);
+        if (n) state.notes = JSON.parse(n);
+      } catch(e) {}
+    }
+
+    function doneCount() { return Object.values(state.completed).filter(Boolean).length; }
+    function pct() { return Math.round((doneCount() / 18) * 100); }
+
+    function curWeekData() {
+      const idx = WEEKS.findIndex(w => w.seances.some(s => !state.completed[s.id]));
+      return idx >= 0 ? WEEKS[idx] : WEEKS[5];
+    }
+
+    function avgScore() {
+      const vals = Object.values(state.scores).filter(Boolean);
+      if (!vals.length) return null;
+      return (vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(1);
+    }
+
+    function weekDone(week) {
+      return week.seances.filter(s => state.completed[s.id]).length;
+    }
+
+    function tagClass(p) {
+      return p === 'Anxieux' ? 'tag-anxieux' : p === 'Rouillé' ? 'tag-rouille' : 'tag-non';
+    }
+
+    function navigate(view) {
+      state.view = view;
+      state.scriptOpen = false;
+      render();
+      window.scrollTo(0, 0);
+    }
+
+    function openSeance(weekIdx, seanceIdx) {
+      state.curWeek = WEEKS[weekIdx];
+      state.curSeance = WEEKS[weekIdx].seances[seanceIdx];
+      state.scriptOpen = false;
+      state.tempScore = state.scores[state.curSeance.id] || 5;
+      state.tempNote = state.notes[state.curSeance.id] || '';
+      state.checkinDone = !!state.completed[state.curSeance.id];
+      state.view = 'seance';
+      render();
+      window.scrollTo(0, 0);
+    }
+
+    function toggleScript() {
+      state.scriptOpen = !state.scriptOpen;
+      render();
+    }
+
+    function setScore(n) {
+      state.tempScore = n;
+      render();
+    }
+
+    function saveCheckin() {
+      const id = state.curSeance.id;
+      state.completed[id] = true;
+      state.scores[id] = state.tempScore;
+      state.notes[id] = state.tempNote;
+      state.checkinDone = true;
+      saveState();
+      render();
+    }
+
+    function navBar() {
+      const tabs = [
+        {id:'home',icon:'🏠',label:'Accueil'},
+        {id:'programme',icon:'📅',label:'Programme'},
+        {id:'journal',icon:'📊',label:'Journal'},
+        {id:'profil',icon:'👤',label:'Profil'}
+      ];
+      const v = state.view === 'seance' ? 'programme' : state.view;
+      return `<div class="nav-bar"><div class="nav-bar-inner">${tabs.map(t => `
+        <button class="nav-btn ${v === t.id ? 'active' : ''}" onclick="navigate('${t.id}')">
+          <div class="icon">${t.icon}</div>
+          <div class="label">${t.label}</div>
+        </button>`).join('')}</div></div><div style="height:72px"></div>`;
+    }
+
+    function scriptProse(id) {
+      const sc = SCRIPTS[id];
+      if (!sc) return '';
+      const parts = sc.lines.map(line => {
+        if (line.t === 'instruction') return `<em style="color:#64748B;font-size:13px">${line.x}</em>`;
+        if (line.t === 'fin') return `<span style="color:#34D399">${line.x}</span>`;
+        if (line.t === 'pause') return `<span style="color:#FCD34D;font-style:italic">${line.x}</span>`;
+        if (line.t === 'respiration') return `<span style="color:#5EEAD4">${line.x}</span>`;
+        if (line.t === 'exercice') return `<span style="color:#A5B4FC">${line.x}</span>`;
+        if (line.t === 'scan') return `<span style="color:#C4B5FD">${line.x}</span>`;
+        return `<span>${line.x}</span>`;
+      });
+      return parts.map(p => `<p style="margin-bottom:12px">${p}</p>`).join('');
+    }
+
+    function weekSeances(week, wIdx) {
+      return week.seances.map((s, si) => {
+        const done = !!state.completed[s.id];
+        const score = state.scores[s.id];
+        return `<button class="seance-row" onclick="openSeance(${wIdx},${si})">
+          <div style="width:28px;height:28px;border-radius:50%;background:${done ? '#0EA5E9' : '#0f172a'};border:${done ? 'none' : '1px solid rgba(255,255,255,0.1)'};display:flex;align-items:center;justify-content:center;font-size:11px;color:${done ? '#fff' : '#475569'};flex-shrink:0;font-weight:700">${done ? '✓' : (si+1)}</div>
+          <div style="flex:1;text-align:left">
+            <div style="font-size:13px;font-weight:500;color:#e2e8f0">${s.titre}</div>
+            <div style="font-size:11px;color:#475569;margin-top:1px">${s.duree}</div>
+          </div>
+          ${score ? `<div style="font-size:12px;color:#38BDF8;font-weight:700">${score}/10</div>` : ''}
+          <div style="color:#1e293b;font-size:14px">›</div>
+        </button>`;
+      }).join('');
+    }
+
+    function renderHome() {
+      const cw = curWeekData();
+      const barsHTML = cw.seances.map(s => `<div style="flex:1;height:3px;border-radius:3px;background:${state.completed[s.id] ? '#0EA5E9' : '#0f172a'}"></div>`).join('');
+
+      return `
+      <div class="wave-bg" style="padding-bottom:24px">
+        <div class="wrap" style="padding-top:48px;padding-bottom:24px">
+          <div class="fade-in">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#06B6D4);display:flex;align-items:center;justify-content:center;font-size:14px">🌊</div>
+              <span style="color:#38BDF8;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:600">Le Grand Bain</span>
+            </div>
+            <h1 style="font-family:'Playfair Display',serif;font-size:44px;line-height:1.15;margin-bottom:10px">Du bord<br><span style="color:#38BDF8;font-style:italic">au large.</span></h1>
+            <p style="color:#94A3B8;font-size:15px;line-height:1.65;max-width:360px;margin-bottom:26px">Le premier programme audio conçu par un MNS pour passer de l'anxiété aquatique à la liberté totale dans l'eau.</p>
+          </div>
+
+          <div class="glass fade-in d1" style="border-radius:20px;padding:20px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span style="color:#94A3B8;font-size:13px">Ta progression</span>
+              <span style="color:#38BDF8;font-weight:700;font-size:17px">${doneCount()}<span style="color:#475569;font-size:12px;font-weight:400">/18</span></span>
+            </div>
+            <div class="progress-track" style="margin-bottom:16px"><div class="progress-fill" style="width:${pct()}%"></div></div>
+            <div style="display:flex">
+              <div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:700;color:#0EA5E9">${pct()}%</div><div style="font-size:11px;color:#475569;margin-top:2px">Complété</div></div>
+              <div style="width:1px;background:rgba(255,255,255,0.06)"></div>
+              <div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:700;color:#10B981">${avgScore() || '—'}</div><div style="font-size:11px;color:#475569;margin-top:2px">Score moyen</div></div>
+              <div style="width:1px;background:rgba(255,255,255,0.06)"></div>
+              <div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:700;color:#8B5CF6">${cw.num}/6</div><div style="font-size:11px;color:#475569;margin-top:2px">Semaine</div></div>
+            </div>
+          </div>
+
+          <div class="fade-in d2">
+            <button class="btn-primary" onclick="navigate('programme')" style="margin-bottom:10px">Continuer le programme →</button>
+            <div class="glass card-hover" onclick="navigate('programme')" style="border-radius:18px;padding:16px">
+              <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;font-weight:600">Semaine en cours</div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:46px;height:46px;border-radius:14px;background:${cw.color}22;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${cw.icon}</div>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:15px">${cw.title}</div>
+                  <div style="font-size:12px;color:#64748B;margin-top:2px">${cw.objectif}</div>
+                </div>
+                <div style="color:#334155">›</div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:12px">${barsHTML}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${navBar()}`;
+    }
+
+    function renderProgramme() {
+      const weeksHTML = WEEKS.map((week, wIdx) => {
+        const wd = weekDone(week);
+        const cw = curWeekData();
+        const isActive = week.num === cw.num;
+        const isDone = wd === 3;
+
+        return `
+        <div class="glass" style="border-radius:20px;padding:18px 18px 14px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+            <div style="width:46px;height:46px;border-radius:14px;background:${week.color}20;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${isDone ? '✅' : week.icon}</div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
+                <span style="font-size:11px;color:#475569">Semaine ${week.num}</span>
+                ${isActive ? '<span style="font-size:10px;background:rgba(14,165,233,0.15);color:#38BDF8;padding:1px 8px;border-radius:20px;border:1px solid rgba(14,165,233,0.3)">En cours</span>' : ''}
+                ${isDone ? '<span style="font-size:10px;background:rgba(16,185,129,0.1);color:#34D399;padding:1px 8px;border-radius:20px;border:1px solid rgba(16,185,129,0.25)">✓ Terminée</span>' : ''}
+              </div>
+              <div style="font-weight:600;font-size:15px">${week.title}</div>
+            </div>
+            <div style="font-size:13px;color:#334155;font-weight:600">${wd}/3</div>
+          </div>
+          <div class="progress-track" style="margin-bottom:14px"><div class="progress-fill" style="width:${(wd/3)*100}%;background:${week.color}"></div></div>
+          ${weekSeances(week, wIdx)}
+        </div>`;
+      }).join('');
+
+      return `
+      <div class="wrap" style="padding-top:40px;padding-bottom:24px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px">
+          <div>
+            <div style="font-size:11px;color:#475569;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Le Grand Bain</div>
+            <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700">Programme</h2>
+          </div>
+          <div class="glass" style="border-radius:14px;padding:8px 14px;text-align:center">
+            <div style="color:#38BDF8;font-weight:700;font-size:16px">${doneCount()}/18</div>
+            <div style="color:#475569;font-size:10px">séances</div>
+          </div>
+        </div>
+        ${weeksHTML}
+      </div>
+      ${navBar()}`;
+    }
+
+    function renderSeance() {
+      const s = state.curSeance;
+      const w = state.curWeek;
+      if (!s || !w) return renderProgramme();
+
+      const sc = SCRIPTS[s.id];
+      const checkinQuestion = sc ? (sc.lines.find(l => l.t === 'fin') || {}).x : 'Ton observation après la séance ?';
+
+      const scoreHTML = [1,2,3,4,5,6,7,8,9,10].map(n =>
+        `<button class="score-pill ${state.tempScore === n ? 'selected' : ''}" onclick="setScore(${n})">${n}</button>`
+      ).join('');
+
+      const checkinHTML = state.checkinDone ? `
+        <div class="pop" style="text-align:center;padding:24px 0">
+          <div style="font-size:42px;margin-bottom:8px">✅</div>
+          <div style="font-weight:600;font-size:16px;margin-bottom:4px">Séance validée !</div>
+          <div style="color:#38BDF8;font-size:14px">Score : ${state.scores[s.id]}/10</div>
+          ${state.notes[s.id] ? `<div style="color:#475569;font-size:12px;font-style:italic;margin-top:8px;max-width:280px;margin-left:auto;margin-right:auto">"${state.notes[s.id]}"</div>` : ''}
+          <button class="btn-ghost" style="margin-top:12px;text-decoration:underline" onclick="editCheckin()">Modifier</button>
+        </div>` : `
+        <div>
+          <div style="font-size:13px;color:#94A3B8;margin-bottom:12px">Score de confiance</div>
+          <div class="score-grid">${scoreHTML}</div>
+          <div style="font-size:13px;color:#94A3B8;margin-bottom:8px">${checkinQuestion}</div>
+          <textarea id="noteInput" placeholder="Écris ton observation ici..." rows="3">${state.tempNote}</textarea>
+          <button class="btn-primary" onclick="submitCheckin()" style="margin-top:12px">Valider la séance</button>
+        </div>`;
+
+      return `
+      <div style="background:linear-gradient(160deg,${w.color}20 0%,transparent 55%)">
+        <div class="wrap" style="padding-top:32px;padding-bottom:20px">
+          <button class="btn-ghost" style="margin-bottom:18px;display:flex;align-items:center;gap:6px" onclick="navigate('programme')">← Retour au programme</button>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="width:36px;height:36px;border-radius:12px;background:${w.color}25;display:flex;align-items:center;justify-content:center;font-size:16px">${w.icon}</div>
+            <div>
+              <div style="font-size:11px;color:#475569">Semaine ${w.num} · ${w.title}</div>
+              <div style="font-size:12px;color:#64748B">${s.duree}</div>
+            </div>
+          </div>
+          <h1 style="font-family:'Playfair Display',serif;font-size:30px;margin-bottom:10px">${s.titre}</h1>
+          <p style="color:#94A3B8;font-size:14px;line-height:1.6;margin-bottom:12px">${s.desc}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">${s.profil.map(p => `<span class="tag ${tagClass(p)}">${p}</span>`).join('')}</div>
+        </div>
+      </div>
+
+      <div class="wrap" style="padding-bottom:24px">
+        <div class="glass" style="border-radius:20px;overflow:hidden;margin-bottom:14px">
+          <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(139,92,246,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎙</div>
+              <div>
+                <div style="font-weight:600;font-size:15px;color:#e2e8f0">Audio guidé</div>
+                <div style="font-size:12px;color:#475569;margin-top:1px">${sc ? sc.duree : '—'}</div>
+              </div>
+            </div>
+
+            <div class="audio-upload-zone" id="audioZone_${s.id}" onclick="document.getElementById('audioFile_${s.id}').click()">
+              <input type="file" id="audioFile_${s.id}" accept="audio/*" onchange="loadAudio('${s.id}', this)" />
+              <div id="audioPlayer_${s.id}">
+                <div style="font-size:28px;margin-bottom:8px">🎵</div>
+                <div style="font-weight:500;font-size:14px;color:#94A3B8;margin-bottom:4px">Ajouter l'audio de la séance</div>
+                <div style="font-size:12px;color:#475569">Appuie ici pour charger ton fichier mp3</div>
+              </div>
+            </div>
+          </div>
+
+          <button style="width:100%;padding:16px 20px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:inherit" onclick="toggleScript()">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:16px">📄</span>
+              <span style="font-weight:600;font-size:14px;color:#e2e8f0">Lire le script complet</span>
+            </div>
+            <span class="accordion-arrow ${state.scriptOpen ? 'open' : ''}" style="color:#334155;font-size:20px">›</span>
+          </button>
+
+          <div class="accordion-body ${state.scriptOpen ? 'open' : ''}" style="border-top:1px solid rgba(255,255,255,0.05)">
+            <div style="padding:16px 20px 20px" class="script-prose">${scriptProse(s.id)}</div>
+            <div style="padding:0 20px 16px;display:flex;flex-wrap:wrap;gap:10px">
+              <span style="font-size:11px;color:#64748B">Légende :</span>
+              <span style="font-size:11px;color:#5EEAD4">● Respiration</span>
+              <span style="font-size:11px;color:#A5B4FC">● Exercice</span>
+              <span style="font-size:11px;color:#FCD34D">● Pause</span>
+              <span style="font-size:11px;color:#34D399">● Check-in</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass" style="border-radius:20px;padding:20px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <div style="width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;font-size:13px">✓</div>
+            <div style="font-weight:600;font-size:15px">Check-in post-séance</div>
+          </div>
+          <div style="font-size:12px;color:#475569;margin-bottom:18px;padding-left:38px">À remplir juste après ta séance</div>
+          ${checkinHTML}
+        </div>
+      </div>
+      ${navBar()}`;
+    }
+
+    function renderJournal() {
+      const cw = curWeekData();
+      const allSeances = WEEKS.flatMap(w => w.seances);
+
+      const barsHTML = allSeances.map(s => {
+        const sc = state.scores[s.id];
+        const h = sc ? Math.round((sc / 10) * 68) : 4;
+        return `<div class="chart-bar"><div class="chart-fill ${sc ? 'done' : ''}" style="height:${h}px"></div>${sc ? `<div style="font-size:9px;color:#475569">${sc}</div>` : ''}</div>`;
+      }).join('');
+
+      const withNotes = allSeances.filter(s => state.notes[s.id]);
+
+      const notesHTML = withNotes.length === 0
+        ? `<div class="glass" style="border-radius:18px;padding:24px;text-align:center;color:#334155;font-size:13px">Tes observations apparaîtront ici après chaque séance validée.</div>`
+        : withNotes.map(s => {
+            const week = WEEKS.find(w => w.seances.some(x => x.id === s.id));
+            return `<div class="glass" style="border-radius:16px;padding:16px;margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                <div><span style="font-size:11px;color:#475569">S${week.num} · </span><span style="font-size:14px;font-weight:500">${s.titre}</span></div>
+                <span style="color:#38BDF8;font-weight:700;font-size:14px">${state.scores[s.id]}/10</span>
+              </div>
+              <p style="color:#64748B;font-size:13px;font-style:italic">"${state.notes[s.id]}"</p>
+            </div>`;
+          }).join('');
+
+      return `
+      <div class="wrap" style="padding-top:40px;padding-bottom:24px">
+        <div style="font-size:11px;color:#475569;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Le Grand Bain</div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:28px;margin-bottom:24px">Journal</h2>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+          <div class="glass" style="border-radius:16px;padding:16px 12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#0EA5E9">${doneCount()}/18</div><div style="font-size:11px;color:#475569;margin-top:3px">Séances</div></div>
+          <div class="glass" style="border-radius:16px;padding:16px 12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#10B981">${avgScore() || '—'}</div><div style="font-size:11px;color:#475569;margin-top:3px">Score moy.</div></div>
+          <div class="glass" style="border-radius:16px;padding:16px 12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#8B5CF6">${cw.num}/6</div><div style="font-size:11px;color:#475569;margin-top:3px">Semaine</div></div>
+        </div>
+
+        ${Object.keys(state.scores).length > 0 ? `
+        <div class="glass" style="border-radius:20px;padding:20px;margin-bottom:16px">
+          <div style="font-weight:600;margin-bottom:16px;font-size:14px">Évolution de la confiance</div>
+          <div style="display:flex;align-items:flex-end;gap:4px;height:88px">${barsHTML}</div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:10px;color:#334155">S1·1</span><span style="font-size:10px;color:#334155">S6·3</span></div>
+        </div>` : ''}
+
+        <div style="font-weight:600;font-size:14px;margin-bottom:12px">Observations</div>
+        ${notesHTML}
+      </div>
+      ${navBar()}`;
+    }
+
+    function renderProfil() {
+      const profils = [
+        {emoji:'😰',title:'Nageur anxieux',desc:"Tu sais nager techniquement mais tu paniques en eau profonde, tu t'épuises rapidement, ou tu perds confiance dès que les pieds ne touchent plus le fond.",badge:'Profil le plus fréquent',bc:'#fda4af',bb:'rgba(244,63,94,0.1)',bbo:'rgba(244,63,94,0.2)'},
+        {emoji:'🔧',title:'Nageur rouillé',desc:"Tu as appris à nager enfant mais tu n'as pas nagé depuis des années. Tu as les bases mais tu as perdu la confiance et les automatismes.",badge:'Reprise progressive',bc:'#5eead4',bb:'rgba(20,184,166,0.1)',bbo:'rgba(20,184,166,0.2)'},
+        {emoji:'🌱',title:'Non-nageur',desc:"Tu n'as jamais vraiment appris à nager, ou tes apprentissages passés n'ont pas fonctionné. Tu pars de zéro — et c'est parfaitement normal.",badge:'Départ de zéro',bc:'#fcd34d',bb:'rgba(245,158,11,0.1)',bbo:'rgba(245,158,11,0.2)'},
+      ];
+
+      return `
+      <div class="wrap" style="padding-top:40px;padding-bottom:24px">
+        <div style="font-size:11px;color:#475569;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Le Grand Bain</div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:28px;margin-bottom:8px">Ton profil</h2>
+        <p style="color:#64748B;font-size:14px;margin-bottom:24px;line-height:1.6">Identifie-toi pour personnaliser chaque séance selon ton niveau de départ.</p>
+
+        ${profils.map(p => `
+        <div class="glass" style="border-radius:20px;padding:18px;margin-bottom:12px">
+          <div style="display:flex;gap:14px">
+            <div style="font-size:28px;flex-shrink:0">${p.emoji}</div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                <span style="font-weight:600;font-size:15px">${p.title}</span>
+                <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${p.bb};color:${p.bc};border:1px solid ${p.bbo}">${p.badge}</span>
+              </div>
+              <p style="color:#64748B;font-size:13px;line-height:1.6">${p.desc}</p>
+            </div>
+          </div>
+        </div>`).join('')}
+
+        <div class="glass" style="border-radius:20px;padding:18px;margin-bottom:14px">
+          <div style="display:flex;gap:14px;align-items:center">
+            <div style="width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#0EA5E9,#0284C7);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏊</div>
+            <div>
+              <div style="font-size:11px;color:#475569;margin-bottom:3px">Ton coach</div>
+              <div style="font-weight:600;font-size:15px">Maître-Nageur Sauveteur</div>
+              <div style="color:#64748B;font-size:12px;margin-top:2px">Diplômé d'État · Spécialiste confiance aquatique</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
+            <p style="color:#64748B;font-size:13px;line-height:1.65;font-style:italic">"Ce programme ne t'apprend pas à nager. Il t'apprend pourquoi tu paniques — et comment ne plus jamais le faire."</p>
+          </div>
+        </div>
+
+        <div style="border-radius:20px;padding:18px;background:rgba(14,165,233,0.06);border:1px solid rgba(14,165,233,0.18)">
+          <div style="display:flex;gap:12px">
+            <div style="font-size:22px;flex-shrink:0">🛡️</div>
+            <div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:6px">Garantie 30 jours</div>
+              <p style="color:#64748B;font-size:13px;line-height:1.6">Suis les 3 premières semaines. Si tu ne constates aucune progression sur ton score de confiance, remboursement intégral sans question.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${navBar()}`;
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      switch(state.view) {
+        case 'home':
+          app.innerHTML = renderHome();
+          break;
+        case 'programme':
+          app.innerHTML = renderProgramme();
+          break;
+        case 'seance':
+          app.innerHTML = renderSeance();
+          break;
+        case 'journal':
+          app.innerHTML = renderJournal();
+          break;
+        case 'profil':
+          app.innerHTML = renderProfil();
+          break;
+        default:
+          app.innerHTML = renderHome();
+      }
+    }
+
+    window.navigate = navigate;
+    window.openSeance = openSeance;
+    window.toggleScript = toggleScript;
+    window.setScore = setScore;
+
+    window.editCheckin = function() {
+      state.checkinDone = false;
+      render();
+    };
+
+    window.submitCheckin = function() {
+      const el = document.getElementById('noteInput');
+      if (el) state.tempNote = el.value;
+      saveCheckin();
+    };
+
+    window.loadAudio = function(id, input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      const zone = document.getElementById('audioZone_' + id);
+      const player = document.getElementById('audioPlayer_' + id);
+      if (!zone || !player) return;
+
+      zone.onclick = null;
+      zone.style.cursor = 'default';
+      zone.style.borderStyle = 'solid';
+      zone.style.borderColor = 'rgba(14,165,233,0.4)';
+
+      player.innerHTML = `
+        <div style="font-size:12px;color:#38BDF8;margin-bottom:8px;font-weight:500">🎵 ${file.name}</div>
+        <audio controls style="width:100%;border-radius:10px">
+          <source src="${url}" type="${file.type}" />
+        </audio>
+        <button onclick="resetAudio('${id}')" style="background:transparent;border:none;color:#475569;font-size:11px;cursor:pointer;margin-top:8px;font-family:inherit;text-decoration:underline">Changer l'audio</button>
+      `;
+    };
+
+    window.resetAudio = function(id) {
+      const zone = document.getElementById('audioZone_' + id);
+      const player = document.getElementById('audioPlayer_' + id);
+      const input = document.getElementById('audioFile_' + id);
+      if (!zone || !player || !input) return;
+
+      input.value = '';
+      zone.onclick = function() {
+        document.getElementById('audioFile_' + id).click();
+      };
+      zone.style.cursor = 'pointer';
+      zone.style.borderStyle = 'dashed';
+      zone.style.borderColor = 'rgba(14,165,233,0.3)';
+      player.innerHTML = `
+        <div style="font-size:28px;margin-bottom:8px">🎵</div>
+        <div style="font-weight:500;font-size:14px;color:#94A3B8;margin-bottom:4px">Ajouter l'audio de la séance</div>
+        <div style="font-size:12px;color:#475569">Appuie ici pour charger ton fichier mp3</div>
+      `;
+    };
+
+    loadState();
+    render();
+  </script>
+</body>
+</html>
